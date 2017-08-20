@@ -11,6 +11,7 @@ import (
 	"container/list"
 	"io"
 	"bufio"
+	"../include/option"
 )
 
 
@@ -25,8 +26,8 @@ func (b *Buy) ToCsv() string {
 	return fmt.Sprintf("%s,%s,%d,%s", b.Date, b.ID, b.Price, b.Title)
 }
 
-func downloadPage() io.Reader {
-	response, err := http.Get("https://www.mercari.com/jp/search/?sort_order=&keyword=switch&price_min=30000&price_max=60000&status_all=1&status_trading_sold_out=1");
+func downloadPage(url string) io.Reader {
+	response, err := http.Get(url);
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -84,12 +85,13 @@ func retrieveSales(pager io.Reader) *list.List {
 }
 
 func main() {
-	pager := downloadPage()
+	o := option.Load()
+	pager := downloadPage(o.Get("url"))
 	sales := retrieveSales(pager)
 
 	now := time.Now()
 	filename := fmt.Sprintf("%04d%02d%02d.csv", now.Year(), now.Month(), now.Day())
-	file, err := os.Create("../data/" + filename)
+	file, err := os.Create(o.Get("data_dir") + filename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
