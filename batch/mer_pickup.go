@@ -27,15 +27,33 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
+	table := map[string]*Buy{}
 	for _, info := range infos {
 		if info.IsDir() {
 			continue
 		}
 		path := filepath.Join(dataDir, info.Name())
+		fmt.Println("path:" + path)
 		list := load(path)
 		for i := list.Front(); i != nil; i = i.Next() {
 			buy := i.Value.(*Buy)
-			fmt.Println(buy.ID)
+			if _, ok := table[buy.ID]; !ok {
+				table[buy.ID] = buy
+			}
+		}
+	}
+
+	dates := map[string]map[string]*Buy{}
+	for _, v := range table {
+		if _, ok := dates[v.Date]; !ok {
+			dates[v.Date] = map[string]*Buy{}
+		}
+		dates[v.Date][v.ID] = v;
+	}
+	for k, m := range dates {
+		fmt.Println("date:" + k)
+		for _, b := range m {
+			fmt.Println("\t" + b.ID, b.Price, b.Title)
 		}
 	}
 }
