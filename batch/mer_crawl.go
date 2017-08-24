@@ -50,7 +50,8 @@ func retrieveSales(pager io.Reader) *list.List {
 	xName := xmlpath.MustCompile( `.//h3[@class='items-box-name font-2']`)
 
 	now := time.Now()
-	nowStr := fmt.Sprintf("%04d-%02d-%02d", now.Year(), now.Month(), now.Day())
+	//nowStr := fmt.Sprintf("%04d-%02d-%02d", now.Year(), now.Month(), now.Day())
+	nowStr := now.Format("2006-01-02 15:04:05")
 
 	sales := list.New()
 	iSection := xSection.Iter(root)
@@ -90,7 +91,7 @@ func main() {
 	sales := retrieveSales(pager)
 
 	now := time.Now()
-	filename := fmt.Sprintf("%04d%02d%02d.csv", now.Year(), now.Month(), now.Day())
+	filename := fmt.Sprintf("%04d%02d%02d_%02d.csv", now.Year(), now.Month(), now.Day(), now.Hour())
 	file, err := os.Create(o.Get("data_dir") + filename)
 	if err != nil {
 		fmt.Println(err)
