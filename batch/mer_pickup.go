@@ -6,14 +6,15 @@ import (
 	"os"
 	"fmt"
 	"path/filepath"
-	"container/list"
 	"bufio"
 	"strings"
 	"strconv"
+	"time"
+	"sort"
 )
 
 type Buy struct {
-	Date string
+	Date time.Time
 	ID string
 	Price int
 	Title string
@@ -35,31 +36,33 @@ func main() {
 		path := filepath.Join(dataDir, info.Name())
 		fmt.Println("path:" + path)
 		list := load(path)
-		for i := list.Front(); i != nil; i = i.Next() {
-			buy := i.Value.(*Buy)
+		for _, buy := range list {
 			if _, ok := table[buy.ID]; !ok {
 				table[buy.ID] = buy
 			}
 		}
 	}
 
+	keys := []string{}
 	dates := map[string]map[string]*Buy{}
 	for _, v := range table {
-		if _, ok := dates[v.Date]; !ok {
-			dates[v.Date] = map[string]*Buy{}
+		key := fmt.Sprintf("%02d%02d", v.Date.Month(), v.Date.Day())
+		if _, ok := dates[key]; !ok {
+			dates[key] = map[string]*Buy{}
+			keys = append(keys, key)
 		}
-		dates[v.Date][v.ID] = v;
+		dates[key][v.ID] = v;
 	}
-	for k, m := range dates {
-		fmt.Println("date:" + k)
-		for _, b := range m {
-			fmt.Println("\t" + b.ID, b.Price, b.Title)
+	sort.Strings(keys)
+	for _, key := range keys {
+		for _, b := range dates[key] {
+			fmt.Printf("%s,%s,%d,%s\n", key, b.ID, b.Price, b.Title )
 		}
 	}
 }
 
-func load(path string) *list.List {
-	list := new(list.List)
+func load(path string) []*Buy {
+	list := []*Buy{}
 	file, err := os.Open(path)
 	if err != nil {
 		fmt.Println(err)
@@ -71,12 +74,19 @@ func load(path string) *list.List {
 		if len(cells) < 4 {
 			continue
 		}
+		date, err := time.Parse("2006-01-02", cells[0])
+		if err != nil {
+			date, err = time.Parse("2006-01-02 15:04:05", cells[0])
+			if err != nil {
+				continue
+			}
+		}
 		b := new(Buy)
-		b.Date = cells[0]
+		b.Date = date
 		b.ID = cells[1]
 		b.Price, _ = strconv.Atoi(cells[2])
 		b.Title = cells[3]
-		list.PushBack(b)
+		list = append(list, b)
 	}
 	return list
 }
