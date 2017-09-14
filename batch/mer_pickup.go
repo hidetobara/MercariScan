@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 	"sort"
+	"math"
 )
 
 type Buy struct {
@@ -18,6 +19,11 @@ type Buy struct {
 	ID string
 	Price int
 	Title string
+}
+type Average struct {
+	Count int
+	Amount int
+	Distribution int
 }
 
 func main() {
@@ -45,19 +51,38 @@ func main() {
 
 	keys := []string{}
 	dates := map[string]map[string]*Buy{}
+	averages := map[string]*Average{}
 	for _, v := range table {
-		key := fmt.Sprintf("%02d%02d", v.Date.Month(), v.Date.Day())
+		key := fmt.Sprintf("%02d/%02d", v.Date.Month(), v.Date.Day())
 		if _, ok := dates[key]; !ok {
 			dates[key] = map[string]*Buy{}
 			keys = append(keys, key)
 		}
-		dates[key][v.ID] = v;
+		dates[key][v.ID] = v
+
+		if _, ok := averages[key]; !ok {
+			averages[key] = new(Average)
+		}
+		averages[key].Amount += v.Price
+		averages[key].Distribution += v.Price * v.Price
+		averages[key].Count += 1
 	}
 	sort.Strings(keys)
+/*
+	fmt.Println("-----dates")
 	for _, key := range keys {
 		for _, b := range dates[key] {
 			fmt.Printf("%s,%s,%d,%s\n", key, b.ID, b.Price, b.Title )
 		}
+	}
+*/
+	fmt.Println("-----average")
+	for _, key := range keys {
+		average := averages[key]
+		c := average.Count
+		a := average.Amount / c
+		d := average.Distribution / c - a * a
+		fmt.Printf("%s,%d,%d,%f\n", key, c, a, math.Sqrt(float64(d)))
 	}
 }
 
